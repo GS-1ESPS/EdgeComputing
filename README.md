@@ -12,7 +12,7 @@ Desenvolvemos um sistema IoT usando ESP32 e sensores (ultrassônico, DHT22 e chu
 
 ## Arquitetura em Camadas
 
-> O sistema está organizado em três camadas principais: IoT, Back-End e Aplicação.
+> O sistema está organizado em duas camadas principais: IoT e Back-End.
 
 ### Camada IoT (Dispositivos e Sensores)
 

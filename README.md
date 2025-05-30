@@ -10,11 +10,6 @@ Enchentes em áreas urbanas causam prejuízos graves e colocam vidas em risco. A
 ## Solução Proposta - ChuvaSegura
 Desenvolvemos um sistema IoT usando ESP32 e sensores (ultrassônico, DHT22 e chuva) que monitora o ambiente em tempo real. Os dados são enviados para a plataforma TagoIO, onde são visualizados em dashboards e utilizados para acionar alertas automáticos por e-mail/sms para a Defesa Civil.
 
-## Arquitetura em Camadas
-
-> O sistema está organizado em três camadas principais: IoT, Back-End e Aplicação.
-> Portal Web: 
-
 ## Código do Microcontrolador
 
 O código completo está no arquivo CODIGO e é possível acessar pelo link do Wokwi: https://wokwi.com/projects/432057679999717377
@@ -24,7 +19,10 @@ O código completo está no arquivo CODIGO e é possível acessar pelo link do W
 Você pode simular no Wokwi ou fisicamente com os sensores. 
 O LED e o LCD fornecem feedback local, já os dados são enviados à nuvem e alertas por e-mail/sms são disparados automaticamente.
 
-## Estrutura do projeto de Arduino -  Especificações Técnicas
+## Arquitetura em Camadas e Especifiações Técnicas
+
+> O sistema está organizado em três camadas principais: IoT, Back-End e Aplicação.
+> Portal Web: 
 
 ### Instruções de Execução
 1. Carregue o código no Wokwi ou na IDE Arduino.
@@ -156,7 +154,6 @@ Essas variáveis podem ser visualizadas em **dashboards interativos** na TagoIO,
 ---
 
 ## Anexos
-INSERIR ANEXOS
 ![image](https://github.com/user-attachments/assets/0bf9a948-8033-4a92-bdbc-51e11ecb20ec)
 ![image](https://github.com/user-attachments/assets/a6ac9896-2bb8-458b-af3c-e8d82f1f036b)
 ![image](https://github.com/user-attachments/assets/fb658b5c-7095-4fba-bab9-5d466d32afe5)

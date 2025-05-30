@@ -4,17 +4,11 @@
 - Gabrielly Candido RM: 560916
 - Luiza Ribeiro RM: 560200
 
-# NOME PROJETO - O QUE FAZ
+## Descrição do Problema
+Enchentes em áreas urbanas causam prejuízos graves e colocam vidas em risco. A falta de monitoramento em tempo real dificulta a reação preventiva por parte da Defesa Civil e da população.
 
-BREVE DESCRIÇÃO
-
----
-
-## Objetivo
-
-XXXX
-
----
+## Solução Proposta - ChuvaSegura
+Desenvolvemos um sistema IoT usando ESP32 e sensores (ultrassônico, DHT22 e chuva) que monitora o ambiente em tempo real. Os dados são enviados para a plataforma TagoIO, onde são visualizados em dashboards e utilizados para acionar alertas automáticos por e-mail/sms para a Defesa Civil.
 
 ## Arquitetura em Camadas
 
@@ -27,7 +21,6 @@ XXXX
   - Ultrassônico HC-SR04 (mede a distância para estimar o nível de estoque)
   - Display LCD 16x2 I2C (mostra dados localmente)
 
-
 ### Camada Back-End (Plataforma de IoT)
 
 - **TagoIO**
@@ -35,10 +28,6 @@ XXXX
   - Armazena os dados em buckets.
   - Permite criar dashboards interativos.
   - Envia notificações automáticas via Actions.
-
-### Camada Aplicação (Interface)
-
-- **Portal Web:** 
 
 
 ## Código do Microcontrolador
@@ -49,8 +38,18 @@ INSERIR IMAGEM
 
 ## Estrutura do projeto de Arduino -  Especificações Técnicas
 
-### Como Funciona?
-1. 
+## Instruções de Execução
+1. Carregue o código no Wokwi ou na IDE Arduino.
+2. Certifique-se que o Wi-Fi esteja correto.
+3. Configure o Token da TagoIO no código.
+4. No TagoIO:
+   - Crie um device.
+   - Configure um dashboard para visualizar os dados.
+   - Crie uma Action para enviar e-mail se `nivel_agua` less than `10`. (De a acordo com a regra estabelecida)
+
+## Simulação
+Você pode simular no Wokwi (https://wokwi.com/projects/432057679999717377) ou fisicamente com os sensores. 
+O LED e o LCD fornecem feedback local; os dados são enviados à nuvem e alertas por e-mail são disparados automaticamente.
 
 ### Bibliotecas Utilizadas
 - #include <Wire.h>: Comunicação I2C.
@@ -59,67 +58,112 @@ INSERIR IMAGEM
 - #include <HTTPClient.h>: Realiza requisições HTTP.
 - #include <WiFiClientSecure.h>: Permite enviar dados com HTTPS.
 
-### Componentes Utilizados
-- ESP32: Controlador principal responsável pela leitura dos sensores, controle do LCD e comunicação Wi-Fi.
-- Sensor Ultrassônico HC-SR04: Usado para medir a distância entre o sensor e um objeto, com o intuito de simular a quantidade de estoque restante.
-- LCD 16x2 I2C: Display utilizado para mostrar informações ao usuário: ID do cartão e a distância medida pelo sensor ultrassônico. (Apenas para teste interno)
-- Cabos e Protoboard: Para realizar as conexões físicas entre os componentes.
+## Componentes Utilizados
+- ESP32 DevKit
+- Sensor ultrassônico (nível da água)
+- Sensor DHT22 (temperatura/umidade)
+- Sensor de chuva (simulado no Wokwi)
+- Display LCD I2C 16x2
+- LED indicador
+- Plataforma TagoIO (dashboard + trigger de e-mail/sms)
 
-### Configurações e Definições
-- LiquidCrystal_I2C lcd(0x27, 16, 2): Configuração do LCD (16 colunas, 2 linhas). (Apenas para teste interno)
+## ⚙️ Explicação das Funções Principais
 
-### Funções principais
-- sendToTago(...): Envia os dados via HTTP POST com estrutura JSON compatível com TagoIO.
-- setup(): Inicializa Wi-Fi, display LCD e sensores.
-- loop(): A cada 5 segundos, lê os dados, classifica o status (Cheio, Médio, Vazio), envia à nuvem e atualiza o LCD.
+O código do projeto é dividido em duas funções principais da programação embarcada: `setup()` e `loop()`. Abaixo está a explicação detalhada de cada uma:
 
-### Configuração Inicial setup()
-1. Inicialização do LCD (para teste local).
-2. Configuração dos pinos do sensor ultrassônico.
-3. Inicialização da comunicação Serial para debug.
-4. Conexão com a rede Wi-Fi.
-5. Mensagens iniciais no monitor serial e display.
+---
 
-### Configuração no loop()
-1. A cada 5 segundos (`SEND_INTERVAL`):
-   
-   a. Leitura do valor simulado de RFID.  
-   b. Leitura da distância via sensor ultrassônico.  
-   c. Classificação do status do estoque com base na distância.  
-   d. Montagem de objeto JSON com `rfid`, `distancia` e `status`.  
-   e. Envio do JSON via HTTPS (POST) para o endpoint do TagoIO.  
-   f. Exibição das informações no display LCD (apenas para teste interno).
+### 🔧 void setup()
 
-3. Os dados são armazenados na nuvem e podem ser acessados no dashboard do TagoIO.
+A função `setup()` é executada **uma única vez** no início da execução. Sua principal função é **inicializar os componentes e configurar os pinos**. Veja o que acontece nela:
+
+- `Serial.begin(115200)`: Inicia a comunicação serial para debug.
+- `pinMode(...)`: Configura os pinos digitais usados (trigger/echo do sensor ultrassônico, sensor de chuva, LED).
+- `dht.begin()`: Inicializa o sensor de temperatura e umidade (DHT22).
+- `Wire.begin(SDA, SCL)`: Inicializa a comunicação I2C com o display LCD.
+- `lcd.init()` e `lcd.backlight()`: Liga e ativa o backlight do display.
+- `lcd.print(...)`: Mostra mensagens iniciais no LCD (ex: "Conectando...").
+- `WiFi.begin(...)`: Conecta-se à rede Wi-Fi.
+- Laço `while(WiFi.status() != WL_CONNECTED)`: Aguarda conexão com o Wi-Fi antes de seguir.
+
+---
+
+### 🔄 void loop()
+
+A função `loop()` roda **continuamente** enquanto o dispositivo estiver ligado. Ela realiza a lógica principal do sistema. As etapas são:
+
+1. **Leitura dos Sensores:**
+   - Ultrassônico: mede a distância da água.
+   - DHT22: mede temperatura e umidade.
+   - Chuva: detecta se está chovendo via pino digital.
+
+2. **Avaliação de Alertas:**
+   - Se a água estiver acima do limite → alerta de enchente.
+   - Se a temperatura for muito alta → alerta de calor extremo.
+   - Se a umidade for muito alta → alerta de saturação do ar.
+   - Se estiver chovendo e a água estiver alta → alerta **crítico** (situação perigosa).
+
+3. **Exibição no LCD:**
+   - Exibe alertas ou dados em tempo real, como:
+     - Nível da água (em cm)
+     - Chuva: C (chovendo) ou S (seco)
+     - Temperatura e umidade
+
+4. **LED de Alerta:**
+   - O LED acende automaticamente se **qualquer alerta** estiver ativo.
+
+5. **Envio para TagoIO:**
+   - Os dados de `nivel_agua`, `temperatura`, `umidade` e `chuva` são enviados em formato JSON para a API da TagoIO via protocolo HTTP POST.
+   - Se houver erro, é possível ver pelo Serial Monitor.
+
+6. **Delay:**
+   - O loop espera 20 segundos (`delay(20000)`) antes de repetir o ciclo.
+
+---
+
+Essas funções garantem que o sistema funcione de forma contínua, inteligente e em tempo real — essencial em cenários de risco como enchentes.
 
 
-## Diagrama da arquitetura e fluxo do projeto
-INSERIR IMAGEM
+##  Lógica de Alerta
 
-### Explicação do Fluxograma
+O sistema opera com base em quatro condições críticas:
 
-- Início: O sistema é iniciado.
-- Importar Bibliotecas: As bibliotecas necessárias são carregadas.
-- Conectar no Wi-Fi: Ao utilizar a rede de Wi-Fi do Wowki ("Wokwi-GUEST"), ele conecta automaticamente.
-- Conectar no MQTT: Existe um broker público (test.mosquitto.org), o tópico ("test_topic_challenge") que é publicado pelos dispositivos e uma porta (1883).
-- Entrar no loop contínuo: O programa entra no loop(), onde executa de forma contínua a checagem de sensores e o envio de dados.
-- Ler sensor ultrassônico: O ESP32 mede a distância usando o sensor HC-SR04 para estimar a quantidade de estoque disponível.
-- Configurar LCD: O display LCD é inicializado. (Apenas para teste interno)
-- Exibir Dados no LCD: O ID RFID e a distância são mostrados na tela. (Apenas para teste interno)
-- Nova leitura de estoque?: O sistema verifica se deve continuar a leitura.
-  - Se "Não": O sistema volta no loop para ler novamente os sensores.
-  - Se "Sim": 
-    - Classificar status do estoque: Com base na distância medida, o sistema classifica o nível de estoque como "Cheio", "Médio" ou "Vazio".
-    - Montar JSON com RFID, Distância e Status
-    - Publicar JSON via MQTT no tópico "test_topic_challenge", podendo ser recebido por ferramentas como o Node-RED ou a própria plataforma de nuvem TagoIO, que o exibe em um dashboard ou executa ações com base nos dados.
-   
-OBS: Se estivesse em uma aplicação real conectando á plataforma em nuvem (TagoIO), antes da etapa "Nova leitura de estoque" existiriam outras duas:
-- Requisição HTTP (POST) - Irá postar os dados na plataforma de nuvem
-- Enviar dados para a plataforma em nuvem (TagoIO): A plataforma escolhida, TagoIO, irá receber os dados de um sensor. Nesse caso, o da distância.
-Logo depois, o fluxo seria o mesmo, com exceção de envio para exibição do dashboard no Node-RED, uma vez que o próprio TagoIO poderia fazer isso.
+- **Alerta de água**: ativado quando `distancia_cm < 10`
+- **Alerta de temperatura**: ativado quando `temperatura > 40.0°C`
+- **Alerta de umidade**: ativado quando `umidade > 95.0%`
+- **Alerta crítico**: ativado quando `chuva == 1` **e** `distancia_cm < 15`  
+  *(situação potencialmente grave com risco de enchente durante chuva)*
+
+As condições acima também acendem o **LED de alerta** e atualizam o display LCD com mensagens visuais.
+
+---
+
+## Integração com a Plataforma TagoIO
+
+Os dados são enviados para a **TagoIO** via requisição HTTP `POST` com o seguinte header: Device-Token {SEU_TOKEN}
+As variáveis enviadas e monitoradas:
+
+- `nivel_agua` (distância em cm)
+- `temperatura` (°C)
+- `umidade` (%)
+- `chuva` (0 ou 1)
+
+### Dashboard
+
+Essas variáveis podem ser visualizadas em **dashboards interativos** na TagoIO, com gráficos, indicadores e controles.
+
+### Ações Automatizadas
+
+É possível configurar **ações automáticas** como:
+
+- **Envio de e-mail** quando `nivel_agua` indicar risco.
+- Disparo de **webhooks** para outros sistemas.
+- Integração com notificações móveis ou sirenes.
+
+---
 
 ## Anexos
 INSERIR ANEXOS
 
-## Links Externos
-- Link Vídeo Explicação: INSERIR VIDEO
+
+

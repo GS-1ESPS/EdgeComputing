@@ -70,9 +70,13 @@ void loop() {
   // Temperatura e Umidade
   float temperatura = dht.readTemperature();
   float umidade = dht.readHumidity();
-
-  // Chuva (é uma variável pois o Wokwi não suporta uma tal de biblioteca pluvial )
-  int chuva = !digitalRead(CHUVA_PIN);
+  // Wokwi não simula sensores de chuva reais, então usamos um pino digital (CHUVA_PIN) 
+  // que pode ser ligado ou desligado manualmente para testes. 
+  // >>> PARA TESTAR manualmente como se estivesse sempre chovendo:
+  // Basta forçar o valor da variável:
+  // remova o "!" para ler o valor diretamente:
+  // int chuva = digitalRead(CHUVA_PIN);
+  int chuva = digitalRead(CHUVA_PIN);
 
   // Alertas Críticos
   bool alerta_agua = false;

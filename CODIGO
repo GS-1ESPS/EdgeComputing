@@ -1,56 +1,64 @@
+//VERSÃO COMENTADA DE TODO O CÓDIGO, NO WOKWI ESTÁ APENAS COM ALGUNS COMENTÁRIOS ESSENCIAIS
+
 // Bibliotecas Utilizadas
-#include <WiFi.h>
-#include <HTTPClient.h>
-#include <Wire.h>
-#include <LiquidCrystal_I2C.h>
-#include "DHT.h"
+#include <WiFi.h>                // Conexão Wi-Fi com ESP32
+#include <HTTPClient.h>         // Requisições HTTP
+#include <Wire.h>               // Comunicação com o display LCD
+#include <LiquidCrystal_I2C.h>  // Biblioteca do display LCD 16x2 via I2C
+#include "DHT.h"                // Biblioteca para ler dados de temperatura e umidade do sensor DHT22
+//obs: a do sensor ultrassônico não precisa ser instalada
 
 // Definições de Pinos 
-#define TRIG_PIN 5
-#define ECHO_PIN 18
-#define CHUVA_PIN 19
-#define LED_PIN 2
-#define DHT_PIN 15
-#define DHTTYPE DHT22
-#define SDA_PIN 21  
-#define SCL_PIN 22  
+#define TRIG_PIN 5          // Pino do trigger do sensor ultrassônico
+#define ECHO_PIN 18         // Pino do echo do sensor ultrassônico
+#define CHUVA_PIN 19        // Pino digital simulado para detecção de chuva
+#define LED_PIN 2           // LED de alerta (on-board no ESP32)
+#define DHT_PIN 15          // Pino conectado ao sensor DHT22
+#define DHTTYPE DHT22       // Tipo do sensor DHT
+#define SDA_PIN 21          // Pino SDA para comunicação I2C (LCD)
+#define SCL_PIN 22          // Pino SCL para comunicação I2C (LCD)
 
 // Wi-Fi 
-const char* ssid = "Wokwi-GUEST";
-const char* password = "";
+const char* ssid = "Wokwi-GUEST";      // Nome da rede Wi-Fi (simulada no Wokwi)
+const char* password = "";             // Senha da rede (sem senha no Wokwi)
 
 // Token do TagoIO 
-const char* TAGO_TOKEN = "4e6bb313-f0f8-4eb4-9ef5-aa0156e00d54";
+const char* TAGO_TOKEN = "4e6bb313-f0f8-4eb4-9ef5-aa0156e00d54";  // Token de autenticação do dispositivo no TagoIO criado
 
-// Início
-DHT dht(DHT_PIN, DHTTYPE);
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+// Instância dos dispositivos
+DHT dht(DHT_PIN, DHTTYPE);                       // Inicializa o sensor DHT22
+LiquidCrystal_I2C lcd(0x27, 16, 2);              // Inicializa o display LCD com endereço 0x27 e 2 linhas de 16 caracteres
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(115200);                          // Inicializa o monitor serial para debug
 
+  // Define os modos dos pinos
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
-  pinMode(CHUVA_PIN, INPUT_PULLUP);
+  pinMode(CHUVA_PIN, INPUT_PULLUP);              // INPUT_PULLUP simula um botão ligado ao GND, da chuva
   pinMode(LED_PIN, OUTPUT);
 
-  dht.begin();
-  Wire.begin(SDA_PIN, SCL_PIN);
-  //lcd está sendo usada apenas para testes internos
-  lcd.init();
-  lcd.backlight();
+  dht.begin();                                   // Inicializa o sensor dht
+  Wire.begin(SDA_PIN, SCL_PIN);                  // Inicializa comunicação I2C com os pinos definidos
 
+  // Inicializa o LCD
+  lcd.init();
+  lcd.backlight();                               // Ativa a luz de fundo
+
+  // Mensagem inicial no LCD
   lcd.setCursor(0, 0);
   lcd.print("ChuvaSegura");
   lcd.setCursor(0, 1);
   lcd.print("Conectando...");
 
+  // Conecta ao Wi-Fi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
 
+  // Confirma conexão
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("WiFi: OK");
@@ -58,32 +66,34 @@ void setup() {
 }
 
 void loop() {
-  // Medir nível da água
+  // Medição de distância (nível da água) com sensor ultrassônico
   digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
   digitalWrite(TRIG_PIN, HIGH);
   delayMicroseconds(10);
   digitalWrite(TRIG_PIN, LOW);
-  long duracao = pulseIn(ECHO_PIN, HIGH);
-  float distancia_cm = duracao * 0.034 / 2;
+  long duracao = pulseIn(ECHO_PIN, HIGH);                  // Tempo para o sinal refletir de volta
+  float distancia_cm = duracao * 0.034 / 2;                // Conversão para cm em relação à distância
 
-  // Temperatura e Umidade
+  // Leitura de temperatura e umidade
   float temperatura = dht.readTemperature();
   float umidade = dht.readHumidity();
+
   // Wokwi não simula sensores de chuva reais, então usamos um pino digital (CHUVA_PIN) 
   // que pode ser ligado ou desligado manualmente para testes. 
   // >>> PARA TESTAR manualmente como se estivesse sempre chovendo:
   // Basta forçar o valor da variável:
   // remova o "!" para ler o valor diretamente:
   // int chuva = digitalRead(CHUVA_PIN);
-  int chuva = digitalRead(CHUVA_PIN);
+  int chuva = digitalRead(CHUVA_PIN);  // Leitura do estado do pino de chuva (teve que ser manualmente, logo, testamos com 0 e 1)
 
-  // Alertas Críticos
+  // Inicializa os estados de alerta
   bool alerta_agua = false;
   bool alerta_temp = false;
   bool alerta_umid = false;
   bool alerta_critico = false;
 
+  // Regras de alerta baseadas nos dados lidos
   if (distancia_cm < 10) {
     alerta_agua = true;
     Serial.println("⚠️ ALERTA: Nível de água muito alto!");
@@ -104,7 +114,7 @@ void loop() {
     Serial.println("🚨 SITUAÇÃO CRÍTICA: CHUVA + NÍVEL ALTO!");
   }
 
-  // LCD: Mensagem personalizada 
+  // LCD: Exibe alerta ou dados em tempo real - testes internos
   lcd.clear();
   if (alerta_critico) {
     lcd.setCursor(0, 0);
@@ -123,7 +133,7 @@ void loop() {
     lcd.print("A:");
     lcd.print(distancia_cm, 0);
     lcd.print("cm ");
-    lcd.print(chuva ? "C" : "S"); // C = Chuva, S = Seco
+    lcd.print(chuva ? "C" : "S");  // C = Chuva, S = Seco
     lcd.setCursor(0, 1);
     lcd.print((int)temperatura);
     lcd.print("C ");
@@ -131,16 +141,17 @@ void loop() {
     lcd.print("%");
   }
 
-  // LED acende se houver alerta
+  // LED de alerta (acende se qualquer alerta estiver ativo)
   digitalWrite(LED_PIN, alerta_agua || alerta_temp || alerta_umid || alerta_critico ? HIGH : LOW);
 
-  // Envio para TagoIO 
+  // Envia os dados para a plataforma TagoIO via POST
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    http.begin("https://api.tago.io/data");
-    http.addHeader("Content-Type", "application/json");
-    http.addHeader("Device-Token", TAGO_TOKEN);
+    http.begin("https://api.tago.io/data");                     // URL da API TagoIO
+    http.addHeader("Content-Type", "application/json");         // Cabeçalho HTTP
+    http.addHeader("Device-Token", TAGO_TOKEN);                 // Token de autenticação
 
+    // Monta o payload em JSON com os dados dos sensores
     String payload = "[";
     payload += "{\"variable\":\"nivel_agua\",\"value\":" + String(distancia_cm) + "},";
     payload += "{\"variable\":\"temperatura\",\"value\":" + String(temperatura) + "},";
@@ -148,10 +159,10 @@ void loop() {
     payload += "{\"variable\":\"chuva\",\"value\":" + String(chuva) + "}";
     payload += "]";
 
-    int resposta = http.POST(payload);
-    Serial.println("Resposta TagoIO: " + String(resposta));
-    http.end();
+    int resposta = http.POST(payload);                          // Envia requisição
+    Serial.println("Resposta TagoIO: " + String(resposta));     // Mostra resposta no terminal
+    http.end();                                                 // Encerra conexão
   }
 
-  delay(20000); 
+  delay(20000); // Aguarda 20 segundos antes da próxima leitura
 }

@@ -1,4 +1,4 @@
-# GS 2025 - Edge
+# GS 2025 - Edge 
 
 ## Integrantes 1ESPS
 - Gabrielly Candido RM: 560916
@@ -22,7 +22,8 @@ O LED e o LCD fornecem feedback local, já os dados são enviados à nuvem e ale
 ## Arquitetura em Camadas e Especifiações Técnicas
 
 > O sistema está organizado em três camadas principais: IoT, Back-End e Aplicação.
-> Portal Web: 
+> Portal Web:
+> Vídeo Explicativo: https://youtu.be/3lvfI71WGdM?si=fdtBXn3kRWKhknM0 
 
 ### Instruções de Execução
 1. Carregue o código no Wokwi ou na IDE Arduino.
@@ -112,9 +113,6 @@ A função `loop()` roda **continuamente** enquanto o dispositivo estiver ligado
 
 ---
 
-Essas funções garantem que o sistema funcione de forma contínua, inteligente e em tempo real — essencial em cenários de risco como enchentes.
-
-
 ##  Lógica de Alerta
 
 O sistema opera com base em quatro condições críticas:
@@ -125,7 +123,7 @@ O sistema opera com base em quatro condições críticas:
 - **Alerta crítico**: ativado quando `chuva == 1` **e** `distancia_cm < 15`  
   *(situação potencialmente grave com risco de enchente durante chuva)*
 
-As condições acima também acendem o **LED de alerta** e atualizam o display LCD com mensagens visuais.
+As condições acima também acendem o **LED de alerta** e atualizam o display LCD com mensagens visuais (apenas para testes internos).
 
 ---
 
